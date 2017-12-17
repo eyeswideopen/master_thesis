@@ -1,5 +1,5 @@
 #based on the official tensorflow docker
-FROM tensorflow/tensorflow
+FROM pytorch/pytorch
 #add everything to container
 ADD . .
 #commands to be run at the beginning

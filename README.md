@@ -20,4 +20,3 @@ by running ```./run_docker.sh``` the docker image is automatically rebuilt and r
 
 #####run container
 ```docker run image_synthesis```
-
