@@ -1,5 +1,14 @@
 #!/bin/bash
 
+createFolderStructure(){
+    #create data folder and copy images from NAS to local folder
+    echo "'data' folder structure created..."
+    mkdir -p ../data
+    mkdir -p ../data/raw
+    mkdir -p ../data/png
+    mkdir -p ../data/jpg
+}
+
 #check if data folder already exists and prompt if it should be reset
 if [ -d "../data" ]; then
     # Control will enter here if dir exists.
@@ -10,15 +19,12 @@ if [ -d "../data" ]; then
         rm -r ../data
         echo "'data' folder with content deleted!"
     else
+        createFolderStructure
         return
     fi
 fi
-#create data folder and copy images from NAS to local folder
-mkdir ../data
-mkdir ../data/raw
-mkdir ../data/png
 
-echo "'data' folder created..."
+createFolderStructure
 
 #check if NAS is found
 if [ ! -d "/media/nas/01_Datasets/CT/LITS/Training Batch 1" ]; then
