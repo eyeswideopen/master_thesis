@@ -10,6 +10,7 @@ import shutil
 rawFolder = os.path.join(os.path.dirname(__file__), '../../data/raw/')
 pngFolder = os.path.join(os.path.dirname(__file__), '../../data/png/')
 jpgFolder = os.path.join(os.path.dirname(__file__), '../../data/jpg/')
+tmpFolder = os.path.join(os.path.dirname(__file__), '../../data/tmp/')
 
 volumes = [f for f in sorted(os.listdir(rawFolder)) if os.path.isfile(os.path.join(rawFolder, f)) and "volume" in f]
 segmentations = [f for f in sorted(os.listdir(rawFolder)) if os.path.isfile(os.path.join(rawFolder, f)) and "segmentation" in f]
@@ -29,7 +30,7 @@ segmentations = [f for f in sorted(os.listdir(rawFolder)) if os.path.isfile(os.p
 
 volumeTupel = zip(segmentations,volumes);
 
-#loop over segmentation/volume pairs to export filan PNGs
+#loop over segmentation/volume pairs to export PNGs
 for fileTuple in volumeTupel:
     for file in fileTuple:
         #get filtype (seg/volume) and the number of it
@@ -40,12 +41,12 @@ for fileTuple in volumeTupel:
             print("Normalizing volume: " + file + " with STANDARD DEVIATION")
             image_data, image_header = load(os.path.join(rawFolder, file))
             image_data = (image_data-np.mean(image_data))/np.std(image_data)
-            save(image_data,os.path.join(rawFolder, file),image_header)
+            save(image_data,os.path.join(tmpFolder, file),image_header)
 
         # convert it to PNGs 
         call([
             "med2image", 
-            "-i", os.path.join(rawFolder,file), 
+            "-i", os.path.join(tmpFolder,file),
             "-d", pngFolder,
             "-t", "png",
             "-o", number + "_" + fileType
