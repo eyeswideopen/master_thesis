@@ -28,11 +28,14 @@ segmentations = [f for f in sorted(os.listdir(rawFolder)) if os.path.isfile(os.p
 # trained_model, transformed_images = irs.train_transform(volumeImages)
 
 
-volumeTupel = zip(segmentations,volumes);
+volumeTupel = list(zip(segmentations,volumes));
 
 #loop over segmentation/volume pairs to export PNGs
 for fileTuple in volumeTupel:
     for file in fileTuple:
+
+        print(file)
+
         #get filtype (seg/volume) and the number of it
         fileType, number = os.path.splitext(file)[0].split('-')
 
@@ -42,10 +45,14 @@ for fileTuple in volumeTupel:
             image_data, image_header = load(os.path.join(rawFolder, file))
             image_data = (image_data-np.mean(image_data))/np.std(image_data)
             save(image_data,os.path.join(tmpFolder, file),image_header)
+        else:
+            #just copy over segmentations to tmp as no normalization is done on them obviously
+            shutil.copyfile(os.path.join(rawFolder, file), os.path.join(tmpFolder, file))
+
 
         # convert it to PNGs 
         call([
-            "med2image", 
+            "med2image",
             "-i", os.path.join(tmpFolder,file),
             "-d", pngFolder,
             "-t", "png",
@@ -57,10 +64,11 @@ for fileTuple in volumeTupel:
     segmentationSlices = [f for f in sorted(os.listdir(pngFolder)) if os.path.isfile(os.path.join(pngFolder, f)) and "segmentation" in f]
     
     # tuple of segmentation/volume slice
-    sliceTupelList = zip(segmentationSlices, volumeSlices)
-    
+    sliceTupelList = list(zip(segmentationSlices, volumeSlices))
+
     boundingBoxes = [] #list of all bounding boxes of all segmentations
     print("Calculating bounding boxes for slices of " + file)
+
 
     #reverse loop over PNG segmentations and save all bounding boxes
     for i, slice in reversed(list(enumerate(segmentationSlices))):
@@ -85,6 +93,8 @@ for fileTuple in volumeTupel:
             #crop rename and save image. name format is <volume number>_<volume slice number>_<'seg' or 'vol'>.jpeg
             im.crop(finalBoundingBox).save(os.path.join(jpgFolder, image.split('_')[0] + '_' + str(index) + '_' + ('seg' if image.find('segmentation') != -1 else 'vol') + '.jpeg'), "jpeg")
     
-    #delete pngs for next segmentation
+    #delete pngs and tmps for next segmentation
     shutil.rmtree(pngFolder)
     os.makedirs(pngFolder)
+    shutil.rmtree(tmpFolder)
+    os.makedirs(tmpFolder)

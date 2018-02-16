@@ -7,6 +7,8 @@ createFolderStructure(){
     mkdir -p ../data/raw
     mkdir -p ../data/png
     mkdir -p ../data/jpg
+    mkdir -p ../data/tmp
+
 }
 
 #check if data folder already exists and prompt if it should be reset
