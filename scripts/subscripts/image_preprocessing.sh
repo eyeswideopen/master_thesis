@@ -6,7 +6,7 @@ createFolderStructure(){
     mkdir -p ../data
     mkdir -p ../data/raw
     mkdir -p ../data/png
-    mkdir -p ../data/jpg
+    mkdir -p ../data/output
     mkdir -p ../data/tmp
 
 }

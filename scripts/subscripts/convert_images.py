@@ -9,7 +9,7 @@ import shutil
 
 rawFolder = os.path.join(os.path.dirname(__file__), '../../data/raw/')
 pngFolder = os.path.join(os.path.dirname(__file__), '../../data/png/')
-jpgFolder = os.path.join(os.path.dirname(__file__), '../../data/jpg/')
+outputFolder = os.path.join(os.path.dirname(__file__), '../../data/output/')
 tmpFolder = os.path.join(os.path.dirname(__file__), '../../data/tmp/')
 
 volumes = [f for f in sorted(os.listdir(rawFolder)) if os.path.isfile(os.path.join(rawFolder, f)) and "volume" in f]
@@ -121,7 +121,51 @@ for imageTuple in sliceTupelList:
         im = Image.open(os.path.join(pngFolder, image)).convert('RGB')
 
         #crop rename and save image. name format is <volume number>_<volume slice number>_<'seg' or 'vol'>.jpeg
-        im.crop(finalBoundingBox).save(os.path.join(jpgFolder, image.split('_')[0] + '_' + str(sliceIndex) + '_' + ('seg' if image.find('segmentation') != -1 else 'vol') + '.jpeg'), "jpeg")
+        im = im.crop(finalBoundingBox)
+
+
+        #segmentation postprocessing (switching of color values to single channel 0,1,2 ... N-1 class labels
+        if image.find('segmentation'):
+            colors = im.getcolors()
+            data = np.array(im)
+
+            # classes are:
+            # [0,0,0] Background
+            # [1,1,1] Liver
+            # [2,2,2] Tumor
+
+            # if only 2 colors are present: no tumor visible -> switch liver (now white) to [1,1,1]
+            if len(colors) == 2:
+                r1, g1, b1 = 255, 255, 255  # Original value
+                r2, g2, b2 = 1, 1, 1  # Value that we want to replace it with
+
+                red, green, blue = data[:, :, 0], data[:, :, 1], data[:, :, 2]
+                mask = (red == r1) & (green == g1) & (blue == b1)
+                data[:, :, :3][mask] = [r2, g2, b2]
+
+                im = Image.fromarray(data)
+
+            # if 3 colors are visible the liver color (now grey) is switched to [1,1,1] and tumor (now white) is switched to [2,2,2]
+            if len(colors) == 3:
+                # liver color switch
+                r1, g1, b1 = 150, 150, 150  # Original value
+                r2, g2, b2 = 1, 1, 1  # Value that we want to replace it with
+
+                red, green, blue = data[:, :, 0], data[:, :, 1], data[:, :, 2]
+                mask = (red == r1) & (green == g1) & (blue == b1)
+                data[:, :, :3][mask] = [r2, g2, b2]
+
+                # tumor color switch
+                r1, g1, b1 = 255, 255, 255  # Original value
+                r2, g2, b2 = 2, 2, 2  # Value that we want to replace it with
+
+                red, green, blue = data[:, :, 0], data[:, :, 1], data[:, :, 2]
+                mask = (red == r1) & (green == g1) & (blue == b1)
+                data[:, :, :3][mask] = [r2, g2, b2]
+
+                im = Image.fromarray(data)
+
+        im.save(os.path.join(outputFolder, image.split('_')[0] + '_' + str(sliceIndex) + '_' + ('seg' if image.find('segmentation') != -1 else 'vol') + '.png'), "png")
     sliceIndex += 1
 
 #finally delete intermediate pngs
