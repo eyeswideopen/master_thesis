@@ -5,7 +5,7 @@ createFolderStructure(){
     echo "'data' folder structure created..."
     mkdir -p ../data
     mkdir -p ../data/raw
-    mkdir -p ../data/png
+    mkdir -p ../data/rawSlices
     mkdir -p ../data/output
     mkdir -p ../data/tmp
 
