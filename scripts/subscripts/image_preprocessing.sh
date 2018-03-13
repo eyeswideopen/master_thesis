@@ -29,10 +29,10 @@ fi
 createFolderStructure
 
 #check if NAS is found
-if [ ! -d "/media/nas/01_Datasets/CT/LITS/Training Batch 1" ]; then
-    echo "Error: data source not found! Is the NAS mounted correctly to '/media/nas'?"
-    exit 1
-fi
-echo "copying image data from NAS to 'data/raw'..."
-rsync --progress /media/nas/01_Datasets/CT/LITS/Training\ Batch\ 1/* ../data/raw
-rsync --progress /media/nas/01_Datasets/CT/LITS/Training\ Batch\ 2/* ../data/raw
+# if [ ! -d "/media/nas/01_Datasets/CT/LITS/Training Batch 1" ]; then
+#     echo "Error: data source not found! Is the NAS mounted correctly to '/media/nas'?"
+#     exit 1
+# fi
+# echo "copying image data from NAS to 'data/raw'..."
+# rsync --progress /media/nas/01_Datasets/CT/LITS/Training\ Batch\ 1/* ../data/raw
+# rsync --progress /media/nas/01_Datasets/CT/LITS/Training\ Batch\ 2/* ../data/raw

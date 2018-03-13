@@ -7,14 +7,10 @@ import shutil
 from tqdm import tqdm
 import time
 
-inputFolder = os.path.join(os.path.dirname(__file__), '../../data/rawSlices/')
-outputFolder = os.path.join(os.path.dirname(__file__), '../../data/output/')
+inputFolder = os.path.join(os.path.dirname(__file__), '../../data/train/rawSlices/')
+outputFolder = os.path.join(os.path.dirname(__file__), '../../data/train/output/')
 
-#
-# ALL SLICES CREATED -> CALCULATE MINIMUM POSSIBLE BOUNDING BOX
-#
 
-# segmentation/volume pair is normalized and saved as pngs -> calculate bounding boxes on segmentations, crop PNGs and save to final folder as JPG
 volumeSlices = [f for f in sorted(os.listdir(inputFolder)) if os.path.isfile(
     os.path.join(inputFolder, f)) and "volume" in f]
 segmentationSlices = [f for f in sorted(os.listdir(inputFolder)) if os.path.isfile(
@@ -24,6 +20,71 @@ segmentationSlices = [f for f in sorted(os.listdir(inputFolder)) if os.path.isfi
 sliceTupelList = list(zip(segmentationSlices, volumeSlices))
 
 
+#process each seg/vol slice pair together
+for sliceIndex, imageTuple in enumerate(tqdm(sliceTupelList)):
+
+
+    #
+    # SEGMENTATION
+    #
+
+    # skip tuple if segmentation is empty
+    im = Image.open(os.path.join(inputFolder, imageTuple[0]))
+    if not im.convert('RGB').getbbox():
+        continue
+
+    # print warning if image size differs from 512x512
+    if not im.size == (512, 512):
+        print("WARNING!! Image size is not 512x512 for " + imageTuple[0])
+        continue
+
+    # convert to greyscale 1 channel image
+    im = im.convert('L')
+    colors = im.getcolors()
+    data = np.array(im)
+
+    # replace class colors
+    # classes are:
+    # 0 Background
+    # 1 Liver
+    # 2 Tumor
+    # if only 2 colors are present: no tumor visible -> switch liver (now 255) to 1
+    if len(colors) == 2:
+        data[data == 255] = 1
+        im = Image.fromarray(data)
+
+    # if 3 colors are visible the liver color (now 150) is switched to 1 and tumor (now 255) is switched to 2
+    if len(colors) == 3:
+        data[data == 150] = 1
+        data[data == 255] = 2
+        im = Image.fromarray(data)
+
+
+    #check if volume is flipped. If so -> rotate segmentation and volume by 180°
+    #now all slices should have the liver on the left side
+    leftHalf, rightHalf = np.hsplit(data, 2)
+    rotate = np.sum(rightHalf) >= np.sum(leftHalf)
+
+    # rotate by 180° if neccessary 
+    if rotate:
+        data = np.rot90(data,2)
+
+    im.save(os.path.join(outputFolder, imageTuple[0].split('_')[0] + '_' + str(sliceIndex) + '_' + 'seg.png'), "png")
+
+
+    #
+    # VOLUME
+    #
+
+    im = Image.open(os.path.join(inputFolder, imageTuple[1]))
+    im = im.convert('RGB') #strip alpha channel
+
+    #rotate as well if seg was rotated
+    if rotate:
+        im = im.rotate(180)
+
+    im.save(os.path.join(outputFolder, imageTuple[1].split('_')[0] + '_' + str(sliceIndex) + '_' + 'vol.png'), "png")
+print("Data preprocessing finished!")
 
 
 
@@ -67,59 +128,3 @@ sliceTupelList = list(zip(segmentationSlices, volumeSlices))
 
 # # crop images accordingly and save to final filder
 # print("Converting slices to the right color spaces and replacing segmentation label colors...")
-
-
-
-
-sliceIndex = 0
-
-for imageTuple in tqdm(sliceTupelList):
-
-    #
-    # SEGMENTATION
-    #
-
-    # skip tuple if segmentation is empty
-    im = Image.open(os.path.join(inputFolder, imageTuple[0]))
-    if not im.convert('RGB').getbbox():
-        continue
-
-    # print warning if image size differs from 512x512
-    if not im.size == (512, 512):
-        print("WARNING!! Image size is not 512x512 for " + image)
-        continue
-
-    # convert to greyscale 1 channel image
-    im = im.convert('L')
-    colors = im.getcolors()
-    data = np.array(im)
-
-    # replace class colors
-    # classes are:
-    # 0 Background
-    # 1 Liver
-    # 2 Tumor
-    # if only 2 colors are present: no tumor visible -> switch liver (now 255) to 1
-    if len(colors) == 2:
-        data[data == 255] = 1
-        im = Image.fromarray(data)
-
-    # if 3 colors are visible the liver color (now 150) is switched to 1 and tumor (now 255) is switched to 2
-    if len(colors) == 3:
-        data[data == 150] = 1
-        data[data == 255] = 2
-        im = Image.fromarray(data)
-
-    im.save(os.path.join(outputFolder, imageTuple[0].split('_')[0] + '_' + str(sliceIndex) + '_' + 'seg.png'), "png")
-
-    #
-    # VOLUME
-    #
-    im = Image.open(os.path.join(inputFolder, imageTuple[1]))
-    im = im.convert('RGB') #strip alpha channel
-    im.save(os.path.join(outputFolder, imageTuple[1].split('_')[0] + '_' + str(sliceIndex) + '_' + 'vol.png'), "png")
-
-    #invrement slice index
-    sliceIndex += 1
-
-print("Data preprocessing finished!")
