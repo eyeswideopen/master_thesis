@@ -1,3 +1,6 @@
 [submodule "pix2pixHD"]
 	path = pix2pixHD
 	url = https://github.com/NVIDIA/pix2pixHD
+[submodule "image-segmentation-keras"]
+	path = image-segmentation-keras
+	url = https://github.com/divamgupta/image-segmentation-keras.git

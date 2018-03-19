@@ -7,9 +7,15 @@ from medpy.io import save
 from operator import itemgetter
 import shutil
 
-rawFolder = os.path.join(os.path.dirname(__file__), '../../data/raw/')
-rawSlicesFolder = os.path.join(os.path.dirname(__file__), '../../data/rawSlices/')
-tmpFolder = os.path.join(os.path.dirname(__file__), '../../data/tmp/')
+useTestData = True
+if(useTestData):
+    rawFolder = os.path.join(os.path.dirname(__file__), '../../data/test/raw/')
+    rawSlicesFolder = os.path.join(os.path.dirname(__file__), '../../data/test/rawSlices/')
+    tmpFolder = os.path.join(os.path.dirname(__file__), '../../data/test/tmp/')
+else:
+    rawFolder = os.path.join(os.path.dirname(__file__), '../../data/train/raw/')
+    rawSlicesFolder = os.path.join(os.path.dirname(__file__), '../../data/train/rawSlices/')
+    tmpFolder = os.path.join(os.path.dirname(__file__), '../../data/train/tmp/')
 
 volumes = [f for f in sorted(os.listdir(rawFolder)) if os.path.isfile(os.path.join(rawFolder, f)) and "volume" in f]
 segmentations = [f for f in sorted(os.listdir(rawFolder)) if os.path.isfile(os.path.join(rawFolder, f)) and "segmentation" in f]
@@ -28,7 +34,11 @@ for fileTuple in volumeTupel:
         print(file)
 
         #get filtype (seg/volume) and the number of it
-        fileType, number = os.path.splitext(file)[0].split('-')
+        if useTestData:
+            trash, fileType, number = os.path.splitext(file)[0].split('-') #trash is just the string 'test'
+        else:
+            fileType, number = os.path.splitext(file)[0].split('-')
+
 
 
         #normalize volumes
