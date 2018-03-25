@@ -79,7 +79,7 @@ for imageTuple in tqdm(sliceTupelList):
         # save the filename to the dict for later output
         if currentVolume not in mirroredVolumes:
             mirroredVolumes[currentVolume] = []
-        mirroredVolumes[currentVolume].push(
+        mirroredVolumes[currentVolume].append(
             imageTuple[0].split('_')[0] + '_' + str(sliceIndex))
 
         # mirror the slice horizontally
