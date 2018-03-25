@@ -32,12 +32,62 @@ segmentationSlices = [f for f in sorted(os.listdir(inputFolder)) if os.path.isfi
 sliceTupelList = list(zip(segmentationSlices, volumeSlices))
 
 
-# dict to store the volumes with the mirrored slices
-mirroredVolumes = {}
+#
+# FIND LEFT RIGHT FLIPPED VOLUMES
+#
+
+leftSum = 0
+rightSum = 0
+sliceIndex = 0
+currentVolume = ''
+volumesToFlipLR = []
+
+print("Searching for horizontal flipped volumes ...")
+for imageTuple in tqdm(sliceTupelList):
+    # check if new volume. if so -> reset slice index
+    if currentVolume != imageTuple[0].split('_')[0]:
+
+        if rightSum > leftSum:
+            volumesToFlipLR.append(currentVolume)
+            print(currentVolume + " should be flipped!")
+
+        sliceIndex = 0
+        leftSum = 0
+        rightSum = 0
+
+        currentVolume = imageTuple[0].split('_')[0]
+
+    # skip tuple if segmentation is empty
+    im = Image.open(os.path.join(inputFolder, imageTuple[0]))
+    if not im.convert('RGB').getbbox():
+        continue
+
+    # convert to greyscale 1 channel image
+    im = im.convert('L')
+
+    data = np.array(im)
+    data[data == 150] = 255
+    # sum lefthalf and righthalf to check which side the liver is on
+    leftHalf, rightHalf = np.hsplit(data, 2)
+    leftSum += np.sum(leftHalf)
+    rightSum += np.sum(rightHalf)
+
+# finalize list for faster access
+volumesToFlipLR = frozenset(volumesToFlipLR)
+
+
+#
+# PROCESS SEGMENTATION VOLUME SLICE PAIRS
+#
+
+# dicts to store the volumes with the flipped slices on both axis
+flippedUDVolumes = {}
+flippedLRVolumes = {}
 
 # process each seg/vol slice pair together
 sliceIndex = 0
 currentVolume = ''
+print("Processing image data ...")
 for imageTuple in tqdm(sliceTupelList):
 
     # check if new volume. if so -> reset slice index
@@ -64,26 +114,40 @@ for imageTuple in tqdm(sliceTupelList):
     colors = im.getcolors()
     data = np.array(im)
 
+    # FLIPPING
+
+    # check if Volume must be flipped on the horizontal axis (up down)
+    # volumes to be flipped: 53 - 67 and 83 - 130
+    vol = int(currentVolume)
+    flipUD = (vol >= 53 and vol <= 67) or (vol >= 83 and vol <= 130)
+    # flip up down if indicated
+    if flipUD:
+        # save the filename to the dict for later output
+        if currentVolume not in flippedUDVolumes:
+            flippedUDVolumes[currentVolume] = 0
+        flippedUDVolumes[currentVolume] = flippedUDVolumes[currentVolume] + 1
+
+        data = np.flipud(data)
+
+    # flip left right if indicated
+    flipLR = currentVolume in volumesToFlipLR
+    if flipLR:
+        # save the filename to the dict for later output
+        if currentVolume not in flippedLRVolumes:
+            flippedLRVolumes[currentVolume] = 0
+        flippedLRVolumes[currentVolume] = flippedLRVolumes[currentVolume] + 1
+
+        # mirror the slice horizontally
+        data = np.fliplr(data)
+
+    # COLOR CORRECTION
+
     # if 3 colors present switch all tumors to liver class (from 150 to 255)
     if len(colors) == 3:
         data[data == 150] = 255
         im = Image.fromarray(data)
 
-    # check if volume is flipped. If so -> rotate segmentation and volume by 180
-    # now all slices should have the liver on the left side
-    leftHalf, rightHalf = np.hsplit(data, 2)
-    mirror = np.sum(rightHalf) >= np.sum(leftHalf)
-
-    # mirror if neccessary
-    if mirror:
-        # save the filename to the dict for later output
-        if currentVolume not in mirroredVolumes:
-            mirroredVolumes[currentVolume] = []
-        mirroredVolumes[currentVolume].append(
-            imageTuple[0].split('_')[0] + '_' + str(sliceIndex))
-
-        # mirror the slice horizontally
-        data = np.fliplr(data)
+    # SAVE SEGMENTATION
 
     im.save(os.path.join(outputFolder, imageTuple[0].split('_')[
             0] + '_' + str(sliceIndex) + '_label.png'), "png")
@@ -95,10 +159,13 @@ for imageTuple in tqdm(sliceTupelList):
     im = Image.open(os.path.join(inputFolder, imageTuple[1]))
     im = im.convert('RGB')  # strip alpha channel
 
-    # rotate as well if seg was rotated
-    if mirror:
+    # FLIPPING
+    if flipLR:
         im = im.transpose(Image.FLIP_LEFT_RIGHT)
+    if flipUD:
+        im = im.transpose(Image.FLIP_TOP_BOTTOM)
 
+    # SAVE IMAGE
     im.save(os.path.join(outputFolder, imageTuple[1].split('_')[
             0] + '_' + str(sliceIndex) + '_image.png'), "png")
     sliceIndex += 1
@@ -109,9 +176,18 @@ for imageTuple in tqdm(sliceTupelList):
 #
 
 print("Data preprocessing finished!")
+print("\n")
+print("LEFT RIGHT FLIPPED VOLUMES:")
 
-for key in mirroredVolumes:
-    print("mirrored Volume: " + key)
-    print("number of slices: " + len(mirroredVolumes[key]))
-    print(mirroredVolumes[key])
+for key in flippedLRVolumes:
+    print("Flipped left-right Volume: " + key + "with " +
+          str(flippedLRVolumes[key]) + " slices")
+    print()
+    print("\n")
+
+print("\n")
+print("UP DOWN FLIPPED VOLUMES:")
+for key in flippedUDVolumes:
+    print("Flipped up-down Volume: " + key + "with " +
+          str(flippedUDVolumes[key]) + " slices")
     print("\n")
