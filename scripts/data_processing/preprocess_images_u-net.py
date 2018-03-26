@@ -49,13 +49,17 @@ for imageTuple in tqdm(sliceTupelList):
 
         if rightSum > leftSum:
             volumesToFlipLR.append(currentVolume)
-            print(currentVolume + " should be flipped!")
 
         sliceIndex = 0
         leftSum = 0
         rightSum = 0
 
         currentVolume = imageTuple[0].split('_')[0]
+
+    # skip volumes which should be ignored
+    # add volumes from test data to ignore here
+    if useTestData and int(currentVolume) == 59:
+        continue
 
     # skip tuple if segmentation is empty
     im = Image.open(os.path.join(inputFolder, imageTuple[0]))
@@ -99,6 +103,11 @@ for imageTuple in tqdm(sliceTupelList):
     # SEGMENTATION
     #
 
+    # skip volumes which should be ignored
+    # add volumes from test data to ignore here
+    if useTestData and int(currentVolume) == 59:
+        continue
+
     # skip tuple if segmentation is empty
     im = Image.open(os.path.join(inputFolder, imageTuple[0]))
     if not im.convert('RGB').getbbox():
@@ -119,7 +128,11 @@ for imageTuple in tqdm(sliceTupelList):
     # check if Volume must be flipped on the horizontal axis (up down)
     # volumes to be flipped: 53 - 67 and 83 - 130
     vol = int(currentVolume)
-    flipUD = (vol >= 53 and vol <= 67) or (vol >= 83 and vol <= 130)
+    if useTestData:
+        flipUD = (vol >= 5 and vol <= 14) or (vol >= 30 and vol <= 41)
+    else:
+        flipUD = (vol >= 53 and vol <= 67) or (vol >= 83 and vol <= 130)
+
     # flip up down if indicated
     if flipUD:
         # save the filename to the dict for later output
@@ -142,7 +155,7 @@ for imageTuple in tqdm(sliceTupelList):
 
     # COLOR CORRECTION
 
-    # if 3 colors present switch all tumors to liver class (from 150 to 255)
+    # switch all tumors to liver class (from 150 to 255)
     if len(colors) == 3:
         data[data == 150] = 255
         im = Image.fromarray(data)
@@ -180,14 +193,11 @@ print("\n")
 print("LEFT RIGHT FLIPPED VOLUMES:")
 
 for key in flippedLRVolumes:
-    print("Flipped left-right Volume: " + key + "with " +
+    print("Flipped left-right Volume: " + key + " with " +
           str(flippedLRVolumes[key]) + " slices")
-    print()
-    print("\n")
 
 print("\n")
 print("UP DOWN FLIPPED VOLUMES:")
 for key in flippedUDVolumes:
     print("Flipped up-down Volume: " + key + "with " +
           str(flippedUDVolumes[key]) + " slices")
-    print("\n")

@@ -23,6 +23,10 @@ segmentations = [f for f in sorted(os.listdir(rawFolder)) if os.path.isfile(os.p
 volumeTupel = list(zip(segmentations,volumes));
 
 
+#clear tmp folder
+os.makedirs(tmpFolder)
+
+
 #
 #EXTRACT PNG SLICES FOR ALL VOLUMES AND SEGMENTATIONS
 #
@@ -71,3 +75,5 @@ for fileTuple in volumeTupel:
         #clear tmp folder for next volume
         shutil.rmtree(tmpFolder)
         os.makedirs(tmpFolder)
+
+shutil.rmtree(tmpFolder)
