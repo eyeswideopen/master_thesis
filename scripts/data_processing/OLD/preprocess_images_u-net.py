@@ -9,7 +9,7 @@ import shutil
 from tqdm import tqdm
 import time
 
-useTestData = False
+useTestData = True
 
 if useTestData:
     inputFolder = os.path.join(os.path.dirname(
@@ -70,7 +70,9 @@ for imageTuple in tqdm(sliceTupelList):
     im = im.convert('L')
 
     data = np.array(im)
-    data[data == 150] = 255
+    data[data == 150] = 1
+    data[data == 255] = 1
+
     # sum lefthalf and righthalf to check which side the liver is on
     leftHalf, rightHalf = np.hsplit(data, 2)
     leftSum += np.sum(leftHalf)
@@ -155,13 +157,14 @@ for imageTuple in tqdm(sliceTupelList):
 
     # COLOR CORRECTION
 
-    # switch all tumors to liver class (from 150 to 255)
-    if len(colors) == 3:
-        data[data == 150] = 255
-        im = Image.fromarray(data)
+    # switch all tumors and liver to liver class (from 150 and 255 to 1)
+    data[data == 150] = 1
+    data[data == 255] = 1
+
+
 
     # SAVE SEGMENTATION
-
+    im = Image.fromarray(data)
     im.save(os.path.join(outputFolder, imageTuple[0].split('_')[
             0] + '_' + str(sliceIndex) + '_label.png'), "png")
 
@@ -199,5 +202,5 @@ for key in flippedLRVolumes:
 print("\n")
 print("UP DOWN FLIPPED VOLUMES:")
 for key in flippedUDVolumes:
-    print("Flipped up-down Volume: " + key + "with " +
+    print("Flipped up-down Volume: " + key + " with " +
           str(flippedUDVolumes[key]) + " slices")
