@@ -1,6 +1,0 @@
-[submodule "pix2pixHD"]
-	path = pix2pixHD
-	url = https://github.com/NVIDIA/pix2pixHD
-[submodule "image-segmentation-keras-py3"]
-	path = image-segmentation-keras-py3
-	url = https://github.com/faysal-ishtiaq/image-segmentation-keras-py3.git
