@@ -185,9 +185,6 @@ for j in tqdm(range(len(numpySegmentations))):
             first = i
         last = i
 
-        print(np.max(segmentationSlice))
-        print(np.min(segmentationSlice))
-
         # save seg
         image = Image.fromarray(segmentationSlice)
         image.convert('L').save(os.path.join(
