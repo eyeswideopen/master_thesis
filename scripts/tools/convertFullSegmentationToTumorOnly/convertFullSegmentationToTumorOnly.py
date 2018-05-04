@@ -22,6 +22,7 @@ for image in tqdm(images):
     data = np.array(im)
     #remove liver class
     data[data == 1] = 0
+    data[data == 2] = 1
 
     im = Image.fromarray(data)
     im.save(os.path.join(outputFolder, image), "png")
