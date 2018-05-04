@@ -19,7 +19,9 @@ for image in tqdm(images):
     im = Image.open(os.path.join(inputFolder, image))
     im = im.convert('L')
 
+
     data = np.array(im)
+    if len(np.unique(data) < 3): continue
     #remove liver class
     data[data == 1] = 0
     data[data == 2] = 1
