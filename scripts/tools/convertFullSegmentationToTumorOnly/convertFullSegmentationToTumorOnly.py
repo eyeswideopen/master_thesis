@@ -21,7 +21,7 @@ for image in tqdm(images):
 
 
     data = np.array(im)
-    if len(np.unique(data) < 3): continue
+    if len(np.unique(data)) < 3: continue
     #remove liver class
     data[data == 1] = 0
     data[data == 2] = 1
