@@ -1,3 +1,6 @@
+#converts visible segmentations with 150 (grey) as liver and 255 (white) as tumor into segmentaitons
+#with 0 background, 1 liver, 2 tumor
+
 from subprocess import call
 import os
 from PIL import Image

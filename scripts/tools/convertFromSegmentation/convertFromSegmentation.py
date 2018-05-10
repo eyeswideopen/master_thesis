@@ -1,3 +1,6 @@
+#converts the files from input in the format 0 background, 1 liver, 2 tumor
+#into a visible segmentation with grey as liver and white as tumor
+
 from subprocess import call
 import os
 from PIL import Image
