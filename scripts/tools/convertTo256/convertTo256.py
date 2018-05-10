@@ -8,6 +8,8 @@ from operator import itemgetter
 import shutil
 from tqdm import tqdm
 import time
+import scipy.ndimage
+import cv2 as cv
 
 inputFolder = os.path.join(os.path.dirname(__file__), './input')
 outputFolder = os.path.join(os.path.dirname(__file__), './output')
@@ -25,10 +27,13 @@ for file in tqdm(segmentations):
     im.save(os.path.join(outputFolder, file))
 
 
-print("scaling slices with nearest neighbour")
+print("scaling slices with order 3 spline interpolation")
 for file in tqdm(images):
+
     im = Image.open(os.path.join(inputFolder, file))
-    im = im.resize((256,256));
+    arr = np.array(im)
+    arr = scipy.ndimage.interpolation.zoom(arr, 0.5)
+    im = Image.fromarray(arr)
     im.save(os.path.join(outputFolder, file))
 
 print("conversion finished")
