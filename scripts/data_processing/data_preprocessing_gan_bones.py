@@ -38,6 +38,11 @@ filepaths = list(zip(labelFiles, imageFiles))
 labels = []
 images = []
 
+<<<<<<< HEAD
+=======
+
+currentIndex = 0
+>>>>>>> 5b9e53cf760f52bc9cc2d310cc5e3c7653648bdf
 print("loading data from disk ...")
 for fileTuple in tqdm(filepaths):
     # loads the segmentation and volume and stores the numpy arrays in a (seg, vol) tuple into the numpy pairs list
@@ -54,6 +59,7 @@ for j in tqdm(range(len(labels))):
     image = images[j]
 
 
+<<<<<<< HEAD
     #DO IMAGE PROCESSING FROM HERE
 
     numpyLabel = np.array(label)
@@ -75,3 +81,42 @@ for j in tqdm(range(len(labels))):
 
 
     # np.save(os.path.join(imageOutputFolder, str(j) + "_vol.npy"), np.array(image))
+=======
+    #DO IMAGE PROCESSING HERE!
+
+
+    # save seg
+    label.convert('L').save(os.path.join(
+        outputFolder, str(j) + "_seg.png"))
+    # save volume
+    np.save(os.path.join(outputFolder, str(j) + "_vol.npy"), np.array(image))
+
+
+
+    # # save the middle slice with visible lable map as example
+    # if saveExampleData:
+
+    #     mid = first + int((last - first)/2)
+
+    #     segmentationSlice = rawSegmentation[:, :, mid]
+    #     volumeSlice = rawVolume[:, :, mid]
+
+    #     # save seg as 8 bit 1 channel without visible classes for synthetization
+    #     image = Image.fromarray(segmentationSlice)
+    #     image.convert('L').save(os.path.join(
+    #         exampleFolder, str(j) + "_" + str(mid) + "_seg.png"))
+
+
+    #     #visialize classes
+    #     segmentationSlice[segmentationSlice == 1] = 150  # liver is grey
+    #     segmentationSlice[segmentationSlice == 2] = 255  # tumors are white
+
+    #     # save seg as 8 bit 1 channel with visible classes
+    #     image = Image.fromarray(segmentationSlice)
+    #     image.convert('L').save(os.path.join(
+    #         exampleFolder, str(j) + "_" + str(mid) + "_visualSeg.png"))
+
+    #     image = Image.fromarray(volumeSlice)
+    #     image.save(os.path.join(exampleFolder, str(
+    #         j) + "_" + str(mid) + "_vol.tif"))
+>>>>>>> 5b9e53cf760f52bc9cc2d310cc5e3c7653648bdf

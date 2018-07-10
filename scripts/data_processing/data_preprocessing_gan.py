@@ -16,12 +16,12 @@ saveExampleData = True
 if(useTestData):
     rawFolder = os.path.join(os.path.dirname(__file__), '../../data/test/raw/')
     outputFolder = os.path.join(os.path.dirname(__file__), '../../data/test/gan/')
-    exampleFolder = os.path.join(os.path.dirname(__file__), '../../data/examples/test/')
+    exampleFolder = os.path.join(os.path.dirname(__file__), '../../data/examples/test/gan/')
 
 else:
     rawFolder = os.path.join(os.path.dirname(__file__), '../../data/train/raw/')
     outputFolder = os.path.join(os.path.dirname(__file__), '../../data/train/gan/')
-    exampleFolder = os.path.join(os.path.dirname(__file__), '../../data/examples/train/')
+    exampleFolder = os.path.join(os.path.dirname(__file__), '../../data/examples/train/gan/')
 
 
 # create tuple list of segmentations/volumes
