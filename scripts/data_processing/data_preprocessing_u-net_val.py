@@ -8,20 +8,14 @@ import warnings
 warnings.filterwarnings("ignore")
 
 # switch here if data from /train or /test should be used
-useTestData = True
 saveExampleData = True
+removeTumorClass = True #used to only have 1 class (liver) for U-Net liver segmentation
 
 
 # create folder paths
-if(useTestData):
-    rawFolder = os.path.join(os.path.dirname(__file__), '../../data/test/raw/')
-    outputFolder = os.path.join(os.path.dirname(__file__), '../../data/test/gan/')
-    exampleFolder = os.path.join(os.path.dirname(__file__), '../../data/examples/test/')
-
-else:
-    rawFolder = os.path.join(os.path.dirname(__file__), '../../data/train/raw/')
-    outputFolder = os.path.join(os.path.dirname(__file__), '../../data/train/gan/')
-    exampleFolder = os.path.join(os.path.dirname(__file__), '../../data/examples/train/')
+rawFolder = os.path.join(os.path.dirname(__file__), '../../data/val/raw/')
+outputFolder = os.path.join(os.path.dirname(__file__), '../../data/val/u-net/')
+exampleFolder = os.path.join(os.path.dirname(__file__), '../../data/examples/val/u-net/')
 
 
 # create tuple list of segmentations/volumes
@@ -29,6 +23,7 @@ volumes = [f for f in sorted(os.listdir(rawFolder)) if os.path.isfile(
     os.path.join(rawFolder, f)) and "volume" in f]
 segmentations = [f for f in sorted(os.listdir(rawFolder)) if os.path.isfile(
     os.path.join(rawFolder, f)) and "segmentation" in f]
+
 # list of tuples containing absolute file paths to segmentation[0]/volume[1]
 filepaths = list(zip(segmentations, volumes))
 
@@ -38,8 +33,6 @@ filepaths = list(zip(segmentations, volumes))
 #
 
 # contain 3D numpy arrays of segmentation/volumes
-
-
 numpySegmentations = []
 numpyVolumes = []
 
@@ -53,8 +46,8 @@ for fileTuple in tqdm(filepaths):
     #
 
     # check if seg/vol pair is blacklisted to be skipped
-    if useTestData and "59" in fileTuple[0]:
-        continue
+    # if "59" in fileTuple[0]:
+    #     continue
     currentIndex += 1
 
     #
@@ -66,13 +59,6 @@ for fileTuple in tqdm(filepaths):
     numpyVolumes.append(load(os.path.join(rawFolder, fileTuple[1]))[0])
 
 
-#
-# STEP 2: Intensity range standardization
-#
-
-# TODO: get this running
-# irs = IntensityRangeStandardization()
-# trained_model, numpyVolumes = irs.train_transform(numpyVolumes)
 
 
 #
@@ -85,10 +71,12 @@ for j in tqdm(range(len(numpySegmentations))):
     rawSegmentation = numpySegmentations[j]
     rawVolume = numpyVolumes[j]
 
+    print(np.unique(numpySegmentations[j]))
+
+    
+
     # 1: normalization
     rawVolume = (rawVolume-np.mean(rawVolume))/np.std(rawVolume)
-
-    # 2: <add your step here>
 
     #
     # DATA TYPE CONVERSION - float64 -> uint16
@@ -117,37 +105,22 @@ for j in tqdm(range(len(numpySegmentations))):
     #
 
     #test data
-    if useTestData:
-        #ccw rotation
-        if  0 <= j <= 1 or 7 <= j <= 23 or 34 <= j <= 34 or 37 <= j <= 44 or 46 <= j <= 54 or 56 <= j <= 65:
-            rawVolume = np.rot90(rawVolume, 1)
-            rawSegmentation = np.rot90(rawSegmentation, 1)
-        #cw rotation
-        else:
-            rawVolume = np.rot90(rawVolume, 3)
-            rawSegmentation = np.rot90(rawSegmentation, 3)
-    
-    #train data
-    else:
-        #ccw rotation
-        if 0 <= j <= 2 or j == 13 or j == 24 or j == 35 or 37 <= j <= 79 or j == 87 or 96 <= j <= 112 or j == 120:
-            rawVolume = np.rot90(rawVolume, 1)
-            rawSegmentation = np.rot90(rawSegmentation, 1)
-        #cw rotation
-        else:
-            rawVolume = np.rot90(rawVolume, 3)
-            rawSegmentation = np.rot90(rawSegmentation, 3)
-        
+    #ccw rotation
+    rawVolume = np.rot90(rawVolume, 1)
+    rawSegmentation = np.rot90(rawSegmentation, 1)
 
-    #
-    # MIRRORING - check whether the volume has to be mirrored left right
-    #
+    # #
+    # # MIRRORING - check whether the volume has to be mirrored left right
+    # #
 
-    leftHalf, rightHalf = np.hsplit(rawSegmentation, 2)
 
-    if np.sum(rightHalf) > np.sum(leftHalf):
-        rawVolume = np.fliplr(rawVolume)
-        rawSegmentation = np.fliplr(rawSegmentation)
+
+    # leftHalf, rightHalf = np.hsplit(rawSegmentation, 2)
+
+    # if np.sum(rightHalf) > np.sum(leftHalf):
+    #     rawVolume = np.fliplr(rawVolume)
+    #     rawSegmentation = np.fliplr(rawSegmentation)
+
 
     #
     # SAVE SLICES - check whether the volume has to be mirrored left right
@@ -156,6 +129,11 @@ for j in tqdm(range(len(numpySegmentations))):
     first = 0
     last = 0
     for i in range(rawVolume.shape[2]):
+
+        if i == 0:
+            print("seg shape: " + str(rawSegmentation.shape))
+            print("vol shape: " + str(rawSegmentation.shape))
+            print("\n")
 
         segmentationSlice = rawSegmentation[:, :, i]
         volumeSlice = rawVolume[:, :, i]
@@ -173,9 +151,18 @@ for j in tqdm(range(len(numpySegmentations))):
         image = Image.fromarray(segmentationSlice)
         image.convert('L').save(os.path.join(
             outputFolder, str(j) + "_" + str(i) + "_seg.png"))
+
+        
         # save volume
-        np.save(os.path.join(outputFolder, str(j) +
-                             "_" + str(i) + "_vol.npy"), volumeSlice)
+        
+        #TIF save - is already uint16 so PIL mode 'I;16'
+        image = Image.fromarray(volumeSlice)
+        image.save(os.path.join(outputFolder, str(j) + "_" + str(i) + "_vol.tif"))
+
+        #npy save
+        # np.save(os.path.join(outputFolder, str(j) +
+        #                      "_" + str(i) + "_vol.npy"), volumeSlice)
+
 
     # save the middle slice with visible lable map as example
     if saveExampleData:

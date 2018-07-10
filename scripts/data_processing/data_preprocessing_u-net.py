@@ -8,7 +8,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 # switch here if data from /train or /test should be used
-useTestData = False
+useTestData = True
 saveExampleData = True
 removeTumorClass = True #used to only have 1 class (liver) for U-Net liver segmentation
 

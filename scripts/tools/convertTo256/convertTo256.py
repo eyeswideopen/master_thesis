@@ -16,10 +16,11 @@ outputFolder = os.path.join(os.path.dirname(__file__), './output')
 images = [f for f in sorted(os.listdir(inputFolder)) if "DS_Store" not in f]
 
 
-segmentations = [f for f in sorted(os.listdir(inputFolder)) if "DS_Store" not in f and "seg" in f]
-images = [f for f in sorted(os.listdir(inputFolder)) if "DS_Store" not in f and "vol" in f]
+segmentations = [f for f in sorted(os.listdir(inputFolder)) if "DS_Store" not in f and ".png" in f]
+images = [f for f in sorted(os.listdir(inputFolder)) if "DS_Store" not in f and ".tif" in f]
 
-
+print("converting " + str(len(segmentations)) + " segmentations")
+print("converting " + str(len(images)) + " images")
 print("scaling segmentations with nearest neighbour")
 for file in tqdm(segmentations):
     im = Image.open(os.path.join(inputFolder, file))
